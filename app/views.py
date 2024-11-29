@@ -3,7 +3,9 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework import generics
-from .models import CustomUser, Country, State, City, CustomUserManager
+
+from exercise1 import settings
+from .models import CustomUser, Country, State, City
 from .serializers import CustomUserSerializer, CountrySerializer, StateSerializer, CitySerializer
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from rest_framework.views import APIView
@@ -12,7 +14,8 @@ from rest_framework.exceptions import AuthenticationFailed
 import jwt, datetime
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.pagination import CursorPagination, PageNumberPagination
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .pagination import ModelPagination
 from rest_framework import (
     viewsets,
@@ -75,17 +78,61 @@ class LoginView(APIView):
             'access': str(access)
         }
         return response
-    
-    
-class LogoutView(APIView):
-    def get(self, request):
-        response = Response()
-        response.delete_cookie('jwt')
-        response.data = {
-            'message': 'success'
-        }
-        return response
 
+# class LogoutView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         try:
+#             # Extract the access token from the Authorization header
+#             auth_header = request.headers.get('Authorization')
+#             if not auth_header or not auth_header.startswith('Bearer '):
+#                 raise AuthenticationFailed('Authorization header missing or invalid')
+
+#             access_token = auth_header.split(' ')[1]
+
+#             # Decode the access token to get the refresh token
+#             decoded_token = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])
+#             user_id = decoded_token.get('user_id')
+
+#             # Get the refresh token for the user
+#             user = CustomUser.objects.get(id=user_id)
+#             refresh_token = RefreshToken.for_user(user)
+
+#             # Blacklist the refresh token
+#             from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+#             token = OutstandingToken.objects.get(token=str(refresh_token))
+#             BlacklistedToken.objects.create(token=token)
+
+#             response = Response()
+#             response.delete_cookie('jwt')
+#             response.data = {
+#                 'message': 'success'
+#             }
+#             return response
+#         except Exception as e:
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+# class gLogoutView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         try:
+#             refresh_token = request.data["refresh"]
+#             token = RefreshToken(refresh_token)
+#             token.blacklist()
+
+#             response = Response()
+#             response.delete_cookie('jwt')
+#             response.data = {
+#                 'message': 'success'
+#             }
+#             return response
+#         except Exception as e:
+#             return Response(status=status.HTTP_400_BAD_REQUEST)
+    
 
 class CustomUserListCreateView(generics.ListCreateAPIView):
     queryset = CustomUser.objects.all()
