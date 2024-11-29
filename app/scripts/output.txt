@@ -1,0 +1,36 @@
+(venv) jathinshyam@DESKTOP-PEBKB16:~/BackendExcercises/Exercise1/exercise1$ python manage.py runscript app.scripts.queries
+Country 'India' already exists.
+State 'Gujarat' already exists.
+Individual data insertion complete
+Country 'India' already exists, skipping bulk insert.
+Bulk insert states complete.
+Bulk insert cities complete.
+Bulk update complete
+All Countries:
+- India
+
+All States:
+- Gujarat (Country: India)
+- Maharashtra (Country: India)
+
+All Cities:
+- Surat (State: Gujarat, Country: India)
+- Ahmedabad (State: Gujarat, Country: India)
+
+Cities in Gujarat:
+- Surat
+- Ahmedabad
+
+States in India:
+- Gujarat
+- Maharashtra
+
+Cities in India:
+- Surat
+- Ahmedabad
+
+Population Extremes in India:
+Minimum Population: 5000000
+Maximum Population: 6000000
+City with Minimum Population: Surat
+City with Maximum Population: Ahmedabad
