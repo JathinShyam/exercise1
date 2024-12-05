@@ -153,14 +153,62 @@ class CountryListCreateView(generics.ListCreateAPIView):
     def get_queryset(self): # type: ignore
         return Country.objects.prefetch_related('states').filter(my_user=self.request.user)
 
-    def create(self, request, *args, **kwargs):
-        is_many = isinstance(request.data, list)
 
-        serializer = self.get_serializer(data=request.data, many=is_many)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)  # Check if input is a list of countries
+
+        if is_many:
+            countries_data = request.data
+        else:
+            countries_data = [request.data]  # Wrap single dictionary in a list for uniform processing
+
+        created_countries = []  # To store created countries, their states, and cities
+
+        for country_data in countries_data:
+            states_data = country_data.pop('states', [])  # Extract and remove states data from the country
+            country_serializer = self.get_serializer(data=country_data)
+            country_serializer.is_valid(raise_exception=True)
+            country = country_serializer.save()  # Save the country
+
+            created_states = []  # To store states created for this country
+
+            # Process the states
+            for state_data in states_data:
+                cities_data = state_data.pop('cities', [])  # Extract and remove cities data from the state
+                state_data['country'] = country.id  # Assign the country ID to the state
+                state_serializer = StateSerializer(data=state_data)
+                state_serializer.is_valid(raise_exception=True)
+                state = state_serializer.save()  # Save the state
+
+                # Process the cities
+                for city_data in cities_data:
+                    city_data['state'] = state.id  # Assign the state ID to the city
+                    city_serializer = CitySerializer(data=city_data)
+                    city_serializer.is_valid(raise_exception=True)
+                    city_serializer.save()
+
+                created_states.append(state_serializer.data)  # Append the serialized state data
+
+            # Add states to the country response data
+            country_data_with_states = country_serializer.data
+            country_data_with_states['states'] = created_states
+            created_countries.append(country_data_with_states)  # Append the country data with states
+
+        # Prepare the response
+        if is_many:
+            return Response(created_countries, status=status.HTTP_201_CREATED)
+        else:
+            return Response(created_countries[0], status=status.HTTP_201_CREATED)
+
+
+    # def create(self, request, *args, **kwargs):
+    #     is_many = isinstance(request.data, list)
+
+    #     serializer = self.get_serializer(data=request.data, many=is_many)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
         try:
