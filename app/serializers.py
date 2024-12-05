@@ -56,8 +56,6 @@ class CountrySerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         return Country.objects.create(my_user=user, **validated_data)
 
-
-
     def get_states(self, obj):
         """
         Retrieve nested states for a country
@@ -139,7 +137,7 @@ class StateSerializer(serializers.ModelSerializer):
     """
     Serializer for State model with nested city and country details
     """
-    cities = CitySerializer(many=True, read_only=True)
+    cities = CitySerializer(many=True, required=False)
     name = serializers.CharField(max_length=100)
     state_code = serializers.CharField(max_length=10)
     gst_code = serializers.CharField(max_length=15)
@@ -177,6 +175,21 @@ class StateSerializer(serializers.ModelSerializer):
         """
         return obj.country.my_user.email if obj.country.my_user else None
 
+    def create(self, validated_data):
+        """
+        Create a new state and associated cities.
+        """
+        # Extract cities data from the validated data
+        cities_data = validated_data.pop('cities', [])
+
+        # Create the State instance
+        state = State.objects.create(**validated_data)
+
+        # Now create the cities and associate them with the state
+        for city_data in cities_data:
+            City.objects.create(state=state, **city_data)
+
+        return state
 
 class AuthTokenSerializer(serializers.Serializer):
     """Serializer for the user auth token."""
