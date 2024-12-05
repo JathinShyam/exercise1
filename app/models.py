@@ -86,6 +86,15 @@ class State(models.Model):
 
     class Meta:
         unique_together = ('country', 'name')
+    
+    @property
+    def country_name(self):
+        return self.country.name
+
+    @property
+    def country_user_name(self):
+        return self.country.my_user.email if self.country.my_user else None
+
 
     def __str__(self) -> str:
         return f"{self.name} - {self.country.name}"
@@ -105,6 +114,10 @@ class City(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def state_name(self):
+        return self.state.name
+    
     def clean(self):
         # Custom validation to ensure population > sum of adult males and females
         if self.population <= (self.num_of_adult_males + self.num_of_adult_females):

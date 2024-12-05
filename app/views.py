@@ -15,7 +15,6 @@ import jwt, datetime
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
-
 from .pagination import ModelPagination
 from rest_framework import (
     viewsets,
@@ -28,7 +27,6 @@ from rest_framework import (
 #     ordering = 'id'
 
 
-
 class RegisterView(APIView):
     authentication_classes = []  # Disable authentication
     permission_classes = [] # Disable permission
@@ -37,6 +35,7 @@ class RegisterView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
 
 class Home(APIView):
     authentication_classes = [JWTAuthentication]
@@ -144,6 +143,7 @@ class CustomUserRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView)
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
 
+
 class CountryListCreateView(generics.ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -152,13 +152,43 @@ class CountryListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self): # type: ignore
         return Country.objects.prefetch_related('states').filter(my_user=self.request.user)
-    
+
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)
+
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        try:
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
+
 
 class CountryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CountrySerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = Country.objects.prefetch_related('states')
+
+    def perform_update(self, serializer):
+        try:
+            if serializer.is_valid(raise_exception=True):
+                super().perform_update(serializer)
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        return super().perform_destroy(instance)
 
 
 class StateListCreateView(generics.ListCreateAPIView):
@@ -169,21 +199,42 @@ class StateListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self): # type: ignore
         return State.objects.prefetch_related('cities').all()
+    
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)
 
-
-    # def list(self, request, *args, **kwargs):
-    #     queryset = 
-    #     serializer = StateSerializer(queryset, many=True)
-    #     return Response(serializer.data)
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        try:
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
 
 class StateRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = StateSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = State.objects.prefetch_related('cities').all()
+
+    def perform_update(self, serializer):
+        try:
+            if serializer.is_valid(raise_exception=True):
+                super().perform_update(serializer)
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        return super().perform_destroy(instance)
 
 
 class CityListCreateView(generics.ListCreateAPIView):
@@ -192,16 +243,27 @@ class CityListCreateView(generics.ListCreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    # def list(self, request, *args, **kwargs):
-    #     queryset = City.objects.all()
-    #     serializer = CitySerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
     def get_queryset(self): # type: ignore
-        return City.objects.filter(user=self.request.user)
+        return City.objects.all()
+    
+    def create(self, request, *args, **kwargs):
+        is_many = isinstance(request.data, list)
+
+        serializer = self.get_serializer(data=request.data, many=is_many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        try:
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
+
 
 class CityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CitySerializer
@@ -209,5 +271,14 @@ class CityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
     queryset = City.objects.all()
 
-    # def get_queryset(self):
-    #     return City.objects.filter(user=self.request.user)
+    def perform_update(self, serializer):
+        try:
+            if serializer.is_valid(raise_exception=True):
+                super().perform_update(serializer)
+            else:
+                return serializer.errors
+        except Exception as e:
+            return Response("Exception: " + str(e), status=status.HTTP_400_BAD_REQUEST)
+
+    def perform_destroy(self, instance):
+        return super().perform_destroy(instance)
