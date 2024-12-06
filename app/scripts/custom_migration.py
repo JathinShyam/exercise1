@@ -5,16 +5,17 @@ from django.db import migrations
 
 
 def forwards_func(apps, schema_editor):
-    Country = apps.get_model('app', 'Country')
-    CustomUser = apps.get_model('app', 'CustomUser')
+    Country = apps.get_model("app", "Country")
+    CustomUser = apps.get_model("app", "CustomUser")
 
     for country in Country.objects.all():
         user = random.choice(CustomUser.objects.all())
         country.my_user = user
         country.save()
 
+
 def reverse_func(apps, schema_editor):
-    Country = apps.get_model('app', 'Country')
+    Country = apps.get_model("app", "Country")
     # CustomUser = apps.get_model('app', 'CustomUser')
 
     for country in Country.objects.all():
@@ -25,7 +26,7 @@ def reverse_func(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('app', '0001_initial'),
+        ("app", "0001_initial"),
     ]
 
     operations = [

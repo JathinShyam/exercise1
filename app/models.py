@@ -1,10 +1,6 @@
-from typing import List, Optional, TypedDict
 from uuid import uuid4
 from django.db import models
-# from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.core.exceptions import ValidationError
-# from django.contrib.auth.models import AbstractUser, Group, Permission
-
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
@@ -16,6 +12,7 @@ class CustomUserManager(BaseUserManager):
     Custom user model manager where email is the unique identifiers
     for authentication instead of usernames.
     """
+
     def create_user(self, email, password, **extra_fields):
         """
         Create and save a user with the given email and password.
@@ -43,6 +40,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 
+# Custom User Model
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     id = models.AutoField(primary_key=True)
     email = models.EmailField(_("email address"), unique=True)
@@ -66,12 +64,15 @@ class Country(models.Model):
     country_code = models.CharField(max_length=3, unique=True)
     curr_symbol = models.CharField(max_length=5)
     phone_code = models.CharField(max_length=10, unique=True)
-    my_user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    my_user = models.ForeignKey("CustomUser", on_delete=models.CASCADE)
+
+    # Meta Fields
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True )
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
         return self.name
+
 
 # State Model
 class State(models.Model):
@@ -79,14 +80,17 @@ class State(models.Model):
     name = models.CharField(max_length=100)
     state_code = models.CharField(max_length=10)
     gst_code = models.CharField(max_length=15, unique=True)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='states')
+    country = models.ForeignKey(
+        Country, on_delete=models.CASCADE, related_name="states"
+    )
 
+    # Meta Fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('country', 'name')
-    
+        unique_together = ("country", "name")
+
     @property
     def country_name(self):
         return self.country.name
@@ -95,9 +99,9 @@ class State(models.Model):
     def country_user_name(self):
         return self.country.my_user.email if self.country.my_user else None
 
-
     def __str__(self) -> str:
         return f"{self.name} - {self.country.name}"
+
 
 # City Model
 class City(models.Model):
@@ -109,19 +113,22 @@ class City(models.Model):
     avg_age = models.FloatField()
     num_of_adult_males = models.IntegerField()
     num_of_adult_females = models.IntegerField()
-    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='cities')
+    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name="cities")
 
+    # Meta Fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now_add=True)
 
     @property
     def state_name(self):
         return self.state.name
-    
+
     def clean(self):
         # Custom validation to ensure population > sum of adult males and females
         if self.population <= (self.num_of_adult_males + self.num_of_adult_females):
-            raise ValidationError("Population must be greater than the sum of adult males and females")
+            raise ValidationError(
+                "Population must be greater than the sum of adult males and females"
+            )
 
     def __str__(self) -> str:
         return f"{self.name} - {self.state.name}"
